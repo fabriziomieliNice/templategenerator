@@ -14,12 +14,13 @@ public class GeneratorController {
     @PostMapping
     public String hello1(@RequestBody TemplateRequest body) throws Exception{
         String lambdaName=body.getLambdaName();
-        commanderService.invokeCommandLine("curl","-u","'fabriziomieliNice:Davare123'","https://api.github.com/user/repos","-d","'{\\\"name\\\":\\\""+lambdaName+"\\\"}'","-H","\\\"Authorization: token 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\\\"");
+        commanderService.invokeCommandLine("curl","-u","'fabriziomieliNice:Davare123'","https://api.github.com/user/repos","-d","'{\\\"name\\\":\\\""+lambdaName+"\\\"}'","-H","\\\"Authorization: token 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\\\"");
         commanderService.invokeCommandLine("mkdir","c://sparkathon//"+lambdaName);
-        commanderService.invokeCommandLine("touch","c://sparkathon//"+lambdaName+"//a.txt");
-        commanderService.invokeCommandLine("cd","c://sparkathon//"+lambdaName+";", "touch","b.txt");
+        commanderService.invokeCommandLine("cp","-rf","src//main//resources//lambda-template//*","C://sparkathon//"+lambdaName);
+        //commanderService.invokeCommandLine("touch","c://sparkathon//"+lambdaName+"//a.txt");
+        //commanderService.invokeCommandLine("cd","c://sparkathon//"+lambdaName+";", "touch","b.txt");
         commanderService.invokeCommandLine("cd","c://sparkathon//"+lambdaName+";", "git","init");
-        commanderService.invokeCommandLine("cd","c://sparkathon//"+lambdaName+";", "git","add","a.txt","b.txt");
+        commanderService.invokeCommandLine("cd","c://sparkathon//"+lambdaName+";", "git","add",".");
         commanderService.invokeCommandLine("cd","c://sparkathon//"+lambdaName+";", "git","commit","-m","'Rockets Generator'");
         commanderService.invokeCommandLine("cd","c://sparkathon//"+lambdaName+";", "git","remote", "add", "origin", "https://github.com/fabriziomieliNice/"+lambdaName+".git");
         commanderService.invokeCommandLine("cd","c://sparkathon//"+lambdaName+";", "git","push", "origin", "master");
