@@ -1,7 +1,7 @@
 {
   "name": "%%lambdaName%%",
   "version": "1.0.0",
-  "description": "%%dascription%%",
+  "description": "%%description%%",
   "main": "app.js",
   "scripts": {
     "local": "node ./local-run/localRun.js",
