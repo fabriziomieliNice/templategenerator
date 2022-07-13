@@ -14,7 +14,8 @@ public class GeneratorController {
     @PostMapping
     public String hello1(@RequestBody TemplateRequest body) throws Exception {
         String lambdaName = body.getLambdaName();
-        commanderService.invokeCommandLine("curl", "-u", "'fabriziomieliNice:Davare123'", "https://api.github.com/user/repos", "-d", "'{\\\"name\\\":\\\"" + lambdaName + "\\\"}'", "-H", "\\\"Authorization: token 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\\\"");
+        String token = System.getenv("SPARKATHON_TOKEN");
+        commanderService.invokeCommandLine("curl", "-u", "'fabriziomieliNice:Davare123'", "https://api.github.com/user/repos", "-d", "'{\\\"name\\\":\\\"" + lambdaName + "\\\"}'", "-H", "\\\"Authorization: token "+token+"\\\"");
         commanderService.invokeCommandLine("mkdir", "c://sparkathon//" + lambdaName);
         commanderService.invokeCommandLine("cp", "-rf", "src//main//resources//lambda-template//*", "C://sparkathon//" + lambdaName);
 
