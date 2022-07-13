@@ -2,22 +2,22 @@ package rockets.sparkathon.painless.serverless.templategenerator;
 
 public class TemplateRequest {
 
-    private String team_name;
-    private String lambda_name;
+    private String teamName;
+    private String lambdaName;
 
-    public String getTeam_name() {
-        return team_name;
+    public String getTeamName() {
+        return teamName;
     }
 
-    public void setTeam_name(String team_name) {
-        this.team_name = team_name;
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
     }
 
-    public String getLambda_name() {
-        return lambda_name;
+    public String getLambdaName() {
+        return lambdaName;
     }
 
-    public void setLambda_name(String lambda_name) {
-        this.lambda_name = lambda_name;
+    public void setLambdaName(String lambdaName) {
+        this.lambdaName = lambdaName;
     }
 }

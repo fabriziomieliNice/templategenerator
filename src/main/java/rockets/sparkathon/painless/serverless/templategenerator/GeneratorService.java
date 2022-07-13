@@ -1,18 +1,17 @@
 package rockets.sparkathon.painless.serverless.templategenerator;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/template-generator")
+@CrossOrigin
+@RequestMapping("/generate")
 public class GeneratorService {
 
     @PostMapping
-    public void hello1(@RequestBody TemplateRequest body){
+    public ResponseEntity<TemplateRequest> hello1(@RequestBody TemplateRequest body){
         System.out.println("post");
+        return ResponseEntity.ok(body);
     }
 
 }
