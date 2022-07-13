@@ -1,0 +1,256 @@
+#jinja2:lstrip_blocks:False,trim_blocks:False
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: %%lambdaName%%, revision={{revision}}
+
+Mappings:
+    Environments:
+        dev:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+        test:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+        test-nvir:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+        perf:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+        staging:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+        production:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+        production-au:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+        production-de:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+        production-fedramp:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+        production-uk:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+        production-ca:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+        production-jp:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+        production-fh:
+            LambdaConcurrency: '10'
+            WarningConcurrentExecutionsAlarm: '6'
+            CriticalConcurrentExecutionsAlarm: '9'
+
+Parameters:
+
+    EnvironmentType:
+        Description: The environment type. All resources will be created with environment type prefix
+        Type: String
+        Default: {{stack_prefix}}
+
+    SourceCodeBucket:
+        Description: S3 bucket with lambda source code
+        Type: String
+        Default: {{cf_bucket}}
+
+    DevopsContactInfoSSM:
+      Type: 'AWS::SSM::Parameter::Value<String>'
+      Default: '/{{profile}}/aws/contactinformation/devops'
+      Description: 'Devops Team contact information'
+
+    TeamExternalTopic:
+      Description: '%%teamName%% External SNS topic'
+      Type: 'AWS::SSM::Parameter::Value<String>'
+      Default: '/{{profile}}/aws/sns/%%SNSTopic%%'
+
+    BmcInfoAlarmTopic:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Default: /{{profile}}/aws/sns/topic/bmc-info-alarm-topic
+        Description: The arn of Bmc info alarm sns topic
+
+    BmcCriticalAlarmTopic:
+      Type: 'AWS::SSM::Parameter::Value<String>'
+      Default: /{{profile}}/aws/sns/topic/bmc-critical-alarm-topic
+      Description: The arn of Bmc critical alarm sns topic
+
+Resources:
+
+    %%lambdaName%%Role:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: {{lambda_name}}-role
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                    -
+                        Effect: Allow
+                        Principal:
+                            Service:
+                                - lambda.amazonaws.com
+                        Action:
+                            - sts:AssumeRole
+            ManagedPolicyArns:
+                - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+                - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+
+    %%lambdaName%%Function:
+        Type: AWS::Lambda::Function
+        DependsOn:
+            - %%lambdaName%%Role
+        Properties:
+            FunctionName:   {{lambda_name}}
+            Description:    "%%lambdaName%%"
+            Handler:        src/app/app.handler
+            Runtime:        nodejs14.x
+            Timeout:        300
+            Role:           !GetAtt %%lambdaName%%Role.Arn
+            ReservedConcurrentExecutions:  !FindInMap
+                - Environments
+                - !Ref EnvironmentType
+                - LambdaConcurrency
+            VpcConfig:
+                SecurityGroupIds:
+                  {% for sg in sec_groups -%}
+                    - {{sg}}
+                  {% endfor %}
+                SubnetIds:
+                  {% for sb in subnets -%}
+                    - {{sb}}
+                  {% endfor %}
+            Environment:
+                Variables:
+                    AWS_PROFILE:        "{{stack_prefix}}"
+            Code:
+                S3Bucket: !Ref SourceCodeBucket
+                S3Key:    "{{s3_directory}}/{{lambda_archive}}"
+            Tags:
+                - Key: Name
+                  Value: {{lambda_name}}
+                - Key: Product
+                  Value: %%product%%
+                - Key: Environment
+                  Value: !Ref EnvironmentType
+                - Key: ApplicationOwner
+                  Value: TeamExternalTopic
+                - Key: InfrastructureOwner
+                  Value: !Ref DevopsContactInfoSSM
+
+    %%lambdaName%%FunctionCWRule:
+        Type: AWS::Events::Rule
+        Properties:
+            Description: "CloudWatch Events Rule to React to the CTR S3 bucket put event"
+            Name: "{{stack_prefix}}-InteractionMetadataProduceFunctionRule"
+            EventPattern:
+                  source: ["aws.s3"]
+                  detail-type: ["Object Created"]
+                  detail: {
+                        bucket: {
+                            name: [
+                                "%%bucketName%%"
+                            ]
+                        },
+                        object: {
+                            key: [
+                                prefix: "%%bucketPrefix%%"
+                            ]
+                        }
+                  }
+            State:    "ENABLED"
+            Targets:
+              -
+                Arn: !GetAtt %%lambdaName%%Function.Arn
+                Id: "%%lambdaName%%Function"
+
+    PermissionForEventsToInvoke%%lambdaName%%Lambda:
+        Type: "AWS::Lambda::Permission"
+        Properties:
+            FunctionName:  !Ref %%lambdaName%%Function
+            Action:        "lambda:InvokeFunction"
+            Principal:     "lambda.amazonaws.com"
+            SourceArn:     !Sub "arn:${AWS::Partition}:lambda:::function:*"
+
+    PermissionForCWRuleToInvoke%%lambdaName%%Lambda:
+        Type: 'AWS::Lambda::Permission'
+        Properties:
+          FunctionName: !Ref %%lambdaName%%Function
+          Action:       'lambda:InvokeFunction'
+          Principal:    events.amazonaws.com
+          SourceArn:    !GetAtt %%lambdaName%%FunctionCWRule.Arn
+
+    WarningConcurrentExecutionsAlarm:
+          Type: AWS::CloudWatch::Alarm
+          Properties:
+            AlarmDescription: Concurrent execution warning alarm for the lambda.
+            AlarmName: {{profile}}-%%lambdaName%%-concurrent-execution-warning
+            Namespace: AWS/Lambda
+            MetricName: ConcurrentExecutions
+            Dimensions:
+            -  Name: FunctionName
+               Value: {{lambda_name}}
+            Statistic: Maximum
+            Period: '60'
+            EvaluationPeriods: '1'
+            Threshold: !FindInMap
+              - Environments
+              - !Ref EnvironmentType
+              - WarningConcurrentExecutionsAlarm
+            TreatMissingData: notBreaching
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            AlarmActions:
+              - !Ref TeamExternalTopic
+              - !Ref BmcInfoAlarmTopic
+            OKActions:
+              - !Ref TeamExternalTopic
+              - !Ref BmcInfoAlarmTopic
+
+    CriticalConcurrentExecutionsAlarm:
+          Type: AWS::CloudWatch::Alarm
+          Properties:
+            AlarmDescription: Concurrent execution critical alarm for the lambda.
+            AlarmName: {{profile}}-%%lambdaName%%-concurrent-execution-critical
+            Namespace: AWS/Lambda
+            MetricName: ConcurrentExecutions
+            Dimensions:
+            -  Name: FunctionName
+               Value: {{lambda_name}}
+            Statistic: Maximum
+            Period: '60'
+            EvaluationPeriods: '1'
+            Threshold: !FindInMap
+              - Environments
+              - !Ref EnvironmentType
+              - CriticalConcurrentExecutionsAlarm
+            TreatMissingData: notBreaching
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            AlarmActions:
+              - !Ref TeamExternalTopic
+              - !Ref BmcCriticalAlarmTopic
+            OKActions:
+              - !Ref TeamExternalTopic
+              - !Ref BmcInfoAlarmTopic
+
+Outputs:
+
+    FunctionArn:
+        Description:    "The ARN of the lambda function"
+        Value:          !GetAtt %%lambdaName%%Function.Arn
+        Export:
+            Name:       {{stack_prefix}}-%%lambdaName%%FunctionArn

@@ -1,0 +1,28 @@
+{
+  "name": "%%lambdaName%%",
+  "version": "1.0.0",
+  "description": "%%dascription%%",
+  "main": "app.js",
+  "scripts": {
+    "local": "node ./local-run/localRun.js",
+    "testlocal": "mocha ./test/testcases/*.js",
+    "integration-test-local": "cross-env IT_PROFILE=local npm-run-all -s -c cucumber-report-folder cucumber cucumber-generate-report",
+    "test": "jenkins-mocha --cobertura ./test/testcases/*.js",
+    "integration-test": "npm-run-all -s -c cucumber-report-folder cucumber cucumber-generate-report",
+    "cucumber-report-folder": "npx mkdirp integration-test/reports",
+    "cucumber": "cucumber-js integration-test/features --require integration-test/step-definitions --tags @IntegrationTest -f json:integration-test/reports/cucumber_report.json",
+    "cucumber-generate-report": "node integration-test/cucumber-html.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "7.3.1",
+    "cross-env": "7.0.3",
+    "cucumber-html-reporter": "5.5.0",
+    "jenkins-mocha": "8.0.0",
+    "mkdirp": "1.0.4",
+    "mocha": "7.0.0",
+    "npm-run-all": "4.1.5"
+  }
+}
