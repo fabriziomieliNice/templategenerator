@@ -12,7 +12,7 @@ public class GeneratorController {
     CommanderService commanderService;
 
     @PostMapping
-    public String hello1(@RequestBody TemplateRequest body) throws Exception {
+    public @ResponseBody Response hello1(@RequestBody TemplateRequest body) throws Exception {
         String lambdaName = body.getLambdaName();
         String token = System.getenv("SPARKATHON_TOKEN");
         commanderService.invokeCommandLine("curl", "-u", "'fabriziomieliNice:Davare123'", "https://api.github.com/user/repos", "-d", "'{\\\"name\\\":\\\"" + lambdaName + "\\\"}'", "-H", "\\\"Authorization: token "+token+"\\\"");
@@ -35,7 +35,7 @@ public class GeneratorController {
         commanderService.invokeCommandLine("cd", "c://sparkathon//" + lambdaName + ";", "git", "commit", "-m", "'Rockets Generator'");
         commanderService.invokeCommandLine("cd", "c://sparkathon//" + lambdaName + ";", "git", "remote", "add", "origin", "https://github.com/fabriziomieliNice/" + lambdaName + ".git");
         commanderService.invokeCommandLine("cd", "c://sparkathon//" + lambdaName + ";", "git", "push", "origin", "master");
-        return "https://github.com/fabriziomieliNice/" + lambdaName;
+        return new Response("https://github.com/fabriziomieliNice/" + lambdaName);
 
     }
 
