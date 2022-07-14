@@ -24,7 +24,7 @@ function run_script(command) {
                 reject(error);
             }
             if (stderr) {
-                console.log( ${stderr});
+                console.log(`${stderr}`);
             }
             resolve(stdout);
         });
