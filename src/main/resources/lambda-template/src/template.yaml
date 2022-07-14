@@ -1,0 +1,20 @@
+#jinja2:lstrip_blocks:False,trim_blocks:False
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: local lambda
+
+
+Resources:
+
+  lambdaNameFunction:
+      Type: AWS::Lambda::Function
+
+      Properties:
+        FunctionName:   lambda_name
+        Description:    "lambdaName"
+        Handler:        app/app.handler
+        Runtime:        nodejs14.x
+        Timeout:        300
+
+
